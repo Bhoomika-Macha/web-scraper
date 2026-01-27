@@ -1,65 +1,51 @@
-const axios = require("axios");
-const cheerio = require("cheerio");
+//Import required libraries
+const axios = require('axios')
+const cheerio = require('cheerio')
 
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
+const scrapeData = async (url) => {
+    try {
+        //Make a HTTP GET request to the URL
+        const response = await axios.get(url);
 
-// async function scrapeMultiplePages() {
-//     const urls = [
-//         "https://example.com",
-//         "https://example.com",
-//         "https://example.com"
-//     ];
+        //use cherrio to parse the HTML content
+        const $ = cheerio.load(response.data)
 
-//     for (let i = 0; i < urls.length; i++) {
-//         try {
-//             console.log(`Scraping page ${i + 1}...`);
+        //Extract quotes and their authors
+        const quotes = [];
+        $('.quote').each((index, element)=> {
+            const text = $(element).find('.text').text().trim(); //Quote text
+            const author = $(element).find('.author').text().trim(); //Author name
 
-//             await sleep(2000); // rate limit
+        const tags = [];
+        $(element).find('.tags .tag').each((index, tag) => {
+            tags.push($(tag).text().trim());
+        });
 
-//             const response = await axios.get(urls[i]);
-//             const $ = cheerio.load(response.data);
-
-//             const title = $("h1").text();
-//             console.log("Title:", title);
-//             console.log("----------------------");
-
-//         } catch (error) {
-//             console.log("Error scraping page:", error.message);
-//         }
-//     }
-// }
-
-async function scrapeMultiplePages() {
-    const urls = [
-        "https://example.com",
-        "https://example.com",
-        "https://example.com"
-    ];
-
-    const results = [];
-
-    for (let i = 0; i < urls.length; i++) {
-        try {
-            await sleep(2000);
-
-            const response = await axios.get(urls[i]);
-            const $ = cheerio.load(response.data);
-
-            const title = $("h1").text();
-
-            results.push({
-                url: urls[i],
-                title: title
-            });
-
-        } catch (error) {
-            console.log("Error:", error.message);
-        }
+            quotes.push({text, author, tags});
+        });
+        console.log('Scraped Quotes:', quotes);
+    } catch (error) {
+        console.error('Error Fetching the url: ', error.message);
     }
-
-    console.log("Final scraped data:", results);
 }
 
-scrapeMultiplePages();
+//Function for rate-limitied scraping
+const scrapeWithRateLimit = async (urls, delay) =>{
+    for(const url of urls){
+        console.log(`Scraping: ${url}`);
+        await scrapeData(url);
+        console.log(`Waiting ${delay}ms before the next request`);
+        await new Promise(resolve => setTimeout(resolve, delay)); //Delay
+    }
+}
+
+//Example usage 
+const urlsToScope = [
+    'https://quotes.toscrape.com/page/1/',
+    'https://quotes.toscrape.com/page/2/',
+    'https://quotes.toscrape.com/page/3/',
+    'https://quotes.toscrape.com/page/4/'
+];
+
+const rateLimitDealy = 2000; //2-seconds delay between requests
+scrapeWithRateLimit(urlsToScope, rateLimitDealy);

@@ -5,7 +5,7 @@ const cheerio = require('cheerio');
 
 const app = express();
 app.use(express.static('frontend'));
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Tags we want to filter
 const ALLOWED_TAGS = [

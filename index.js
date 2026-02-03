@@ -83,10 +83,6 @@ const scrapeWithRateLimit = async (urls, delay) => {
 };
 
 // API Endpoint
-app.get('/', (req, res) => {
-    res.send('Quote Scraper API is running. Visit /scrape to get data.');
-});
-
 app.get('/scrape', async (req, res) => {
     try {
         const urls = [
@@ -118,5 +114,5 @@ app.get('/scrape', async (req, res) => {
 
 // Start Server
 app.listen(PORT, () => {
-    console.log(`Server running at http://localhost:${PORT}`);
+    console.log(`Server running on port${PORT}`);
 });

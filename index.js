@@ -8,7 +8,7 @@ app.use(express.static('frontend'));
 const PORT = process.env.PORT || 3000;
 
 // Tags we want to filter
-const ALLOWED_TAGS = [
+let ALLOWED_TAGS = [
     'inspirational',
     'life',
     'humor',
@@ -20,6 +20,14 @@ const ALLOWED_TAGS = [
     'truth',
     'simile'
 ];
+
+// Utility function to shuffle quotes (prevents same quote repeating)
+function shuffleArray(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+}
 
 const scrapeData = async (url) => {
     try {
@@ -95,6 +103,8 @@ app.get('/scrape', async (req, res) => {
         const delay = 2000;
         const quotes = await scrapeWithRateLimit(urls, delay);
 
+        shuffleArray(quotes);
+
         res.json({
             status: 'success',
             count: quotes.length,
@@ -112,7 +122,23 @@ app.get('/scrape', async (req, res) => {
     }
 });
 
+// REMOVE TAB
+app.delete('/tags/:tag', (req, res) => {
+    const tag = req.params.tag.toLowerCase();
+
+    if (!ALLOWED_TAGS.includes(tag)) {
+        return res.status(404).json({ message: 'Tag not found' });
+    }
+
+    ALLOWED_TAGS = ALLOWED_TAGS.filter(t => t !== tag);
+
+    res.json({
+        status: 'success',
+        remainingTags: ALLOWED_TAGS
+    });
+});
+
 // Start Server
 app.listen(PORT, () => {
-    console.log(`Server running on port${PORT}`);
+    console.log(`Server running on port ${PORT}`);
 });

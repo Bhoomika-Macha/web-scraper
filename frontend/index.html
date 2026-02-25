@@ -1,71 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Quotes Scraper</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <title>Quotes</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-    <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
-    />
+  <!-- Font Awesome -->
+  <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
 
-    <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
 
-<h1>Quotes</h1>
+<header class="header">
+  <h1>Quotes</h1>
 
-<div class="tabs">
-    <button class="tab active all" data-tag="all">All</button>
-
-    <button class="tab" data-tag="inspirational">
-        Inspirational <i class="fa-solid fa-x"></i>
-    </button>
-    <button class="tab" data-tag="life">
-        Life <i class="fa-solid fa-x"></i>
-    </button>
-    <button class="tab" data-tag="humor">
-        Humor <i class="fa-solid fa-x"></i>
-    </button>
-    <button class="tab" data-tag="books">
-        Books <i class="fa-solid fa-x"></i>
-    </button>
-    <button class="tab" data-tag="reading">
-        Reading <i class="fa-solid fa-x"></i>
-    </button>
-    <button class="tab" data-tag="friendship">
-        Friendship <i class="fa-solid fa-x"></i>
-    </button>
-    <button class="tab" data-tag="friends">
-        Friends <i class="fa-solid fa-x"></i>
-    </button>
-    <button class="tab" data-tag="love">
-        Love <i class="fa-solid fa-x"></i>
-    </button>
-    <button class="tab" data-tag="truth">
-        Truth <i class="fa-solid fa-x"></i>
-    </button>
-    <button class="tab" data-tag="simile">
-        Simile <i class="fa-solid fa-x"></i>
-    </button>
-</div>
-
-<p id="loadingText">Loading quotes...</p>
-
-<div id="carousel">
-    <button id="prevBtn" class="nav-arrow">
-        <i class="fa-solid fa-chevron-left"></i>
-    </button>
-
-    <div class="quote-card">
-        <p id="quoteText"></p>
-        <p id="quoteAuthor"></p>
+  <div class="top-actions">
+    <div class="stat-pill">
+      <i class="fa-regular fa-heart"></i> Wishlist (<span id="wishCount">0</span>)
+    </div>
+    <div class="stat-pill">
+      <i class="fa-regular fa-eye-slash"></i> Hidden (<span id="hiddenCount">0</span>)
+    </div>
+    <div class="stat-pill">
+      <i class="fa-regular fa-thumbs-up"></i> Liked (<span id="likeCount">0</span>)
+    </div>
+    <div class="stat-pill">
+      <i class="fa-regular fa-thumbs-down"></i> Disliked (<span id="dislikeCount">0</span>)
     </div>
 
-    <button id="nextBtn" class="nav-arrow">
-        <i class="fa-solid fa-chevron-right"></i>
+    <button id="settingsBtn" class="settings-btn">
+      <i class="fa-solid fa-gear"></i>
     </button>
+  </div>
+</header>
+
+<!-- Tabs -->
+<div class="tabs" id="tabs"></div>
+
+<p id="loading">Loading quotes...</p>
+
+<!-- Quote Card -->
+<div class="carousel" id="carousel">
+  <button id="prev" class="nav-btn">
+    <i class="fa-solid fa-chevron-left"></i>
+  </button>
+
+  <div class="quote-card" id="quoteCard">
+    <span class="category" id="category"></span>
+
+    <button id="wishlistBtn" class="heart-btn">
+      <i class="fa-solid fa-heart"></i>
+    </button>
+
+    <p id="quoteText" class="quote-text"></p>
+    <p id="quoteAuthor" class="quote-author"></p>
+
+    <div class="actions">
+      <button id="likeBtn"><i class="fa-regular fa-thumbs-up"></i></button>
+      <button id="dislikeBtn"><i class="fa-regular fa-thumbs-down"></i></button>
+      <button id="hideBtn"><i class="fa-regular fa-eye-slash"></i></button>
+    </div>
+  </div>
+
+  <button id="next" class="nav-btn">
+    <i class="fa-solid fa-chevron-right"></i>
+  </button>
+</div>
+
+<!-- Settings -->
+<div class="overlay" id="overlay"></div>
+<div class="settings-panel" id="settingsPanel">
+  <div class="settings-header">
+    <h3>Manage Categories</h3>
+    <button id="closeSettings">×</button>
+  </div>
+  <p class="settings-sub">
+    Toggle categories on/off to customize your experience
+  </p>
+  <div id="settingsList"></div>
 </div>
 
 <script src="script.js"></script>

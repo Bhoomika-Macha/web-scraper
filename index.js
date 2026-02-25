@@ -1,144 +1,62 @@
-// Import required libraries
-const express = require('express');
-const axios = require('axios');
-const cheerio = require('cheerio');
+require("dotenv").config();
+const express = require("express");
+const mongoose = require("mongoose");
+const Quote = require("./models/Quote");
 
 const app = express();
-app.use(express.static('frontend'));
-const PORT = process.env.PORT || 3000;
+app.use(express.json());
+app.use(express.static("frontend"));
 
-// Tags we want to filter
-let ALLOWED_TAGS = [
-    'inspirational',
-    'life',
-    'humor',
-    'books',
-    'reading',
-    'friendship',
-    'friends',
-    'love',
-    'truth',
-    'simile'
-];
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("MongoDB connected"))
+  .catch(console.error);
 
-// Utility function to shuffle quotes (prevents same quote repeating)
-function shuffleArray(arr) {
-    for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-}
+/* ---------- GET QUOTES ---------- */
+app.get("/quotes", async (req, res) => {
+  const { view } = req.query;
+  const filter = {};
 
-const scrapeData = async (url) => {
-    try {
-        // Make an HTTP GET request to the URL
-        const response = await axios.get(url);
+  if (view === "wishlist") filter.isWishlisted = true;
+  if (view === "liked") filter.isLiked = true;
+  if (view === "disliked") filter.isDisliked = true;
+  if (view === "hidden") filter.isHidden = true;
+  if (!view || view === "all") filter.isHidden = { $ne: true };
 
-        // Load the HTML into Cheerio
-        const $ = cheerio.load(response.data);
-
-        // Array to store filtered quotes from this page
-        const quotes = [];
-
-        $('.quote').each((index, element) => {
-
-            // Get quote text
-            const text = $(element).find('.text').text().trim();
-
-            // Get author name
-            const author = $(element).find('.author').text().trim();
-
-            // Get all tags for this quote
-            const tags = [];
-            $(element).find('.tags .tag').each((i, tag) => {
-                tags.push($(tag).text().trim().toLowerCase());
-            });
-
-            // CHECK: does this quote contain any allowed tag?
-            const hasAllowedTag = tags.some(tag =>
-                ALLOWED_TAGS.includes(tag)
-            );
-
-            // Only push quote if tag matches
-            if (hasAllowedTag) {
-                quotes.push({ text, author, tags });
-            }
-        });
-
-        return quotes; // Return filtered quotes
-
-    } catch (error) {
-        console.error('Error Fetching the URL:', error.message);
-        return [];
-    }
-};
-
-// RATE-LIMITED SCRAPING FUNCTION
-const scrapeWithRateLimit = async (urls, delay) => {
-    const allQuotes = [];
-
-    for (const url of urls) {
-        console.log(`Scraping: ${url}`);
-
-        const pageQuotes = await scrapeData(url);
-        allQuotes.push(...pageQuotes);
-
-        console.log(`Waiting ${delay}ms before the next request`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-    }
-
-    return allQuotes;
-};
-
-// API Endpoint
-app.get('/scrape', async (req, res) => {
-    try {
-        const urls = [
-            'https://quotes.toscrape.com/page/1/',
-            'https://quotes.toscrape.com/page/2/',
-            'https://quotes.toscrape.com/page/3/',
-            'https://quotes.toscrape.com/page/4/'
-        ];
-
-        const delay = 2000;
-        const quotes = await scrapeWithRateLimit(urls, delay);
-
-        shuffleArray(quotes);
-
-        res.json({
-            status: 'success',
-            count: quotes.length,
-            filteredBy: ALLOWED_TAGS,
-            data: {
-                quotes
-            }
-        });
-
-    } catch (error) {
-        res.status(500).json({
-            status: 'error',
-            message: error.message
-        });
-    }
+  const quotes = await Quote.find(filter);
+  res.json({ quotes });
 });
 
-// REMOVE TAB
-app.delete('/tags/:tag', (req, res) => {
-    const tag = req.params.tag.toLowerCase();
+/* ---------- TOGGLE ACTION ---------- */
+app.patch("/quotes/:id/:action", async (req, res) => {
+  const { id, action } = req.params;
+  const q = await Quote.findById(id);
+  if (!q) return res.sendStatus(404);
 
-    if (!ALLOWED_TAGS.includes(tag)) {
-        return res.status(404).json({ message: 'Tag not found' });
-    }
+  if (action === "wishlist") q.isWishlisted = !q.isWishlisted;
+  if (action === "like") {
+    q.isLiked = !q.isLiked;
+    if (q.isLiked) q.isDisliked = false;
+  }
+  if (action === "dislike") {
+    q.isDisliked = !q.isDisliked;
+    if (q.isDisliked) q.isLiked = false;
+  }
+  if (action === "hide") q.isHidden = !q.isHidden;
 
-    ALLOWED_TAGS = ALLOWED_TAGS.filter(t => t !== tag);
-
-    res.json({
-        status: 'success',
-        remainingTags: ALLOWED_TAGS
-    });
+  await q.save();
+  res.json(q);
 });
 
-// Start Server
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+/* ---------- COUNTS ---------- */
+app.get("/counts", async (_, res) => {
+  res.json({
+    wishlist: await Quote.countDocuments({ isWishlisted: true }),
+    liked: await Quote.countDocuments({ isLiked: true }),
+    disliked: await Quote.countDocuments({ isDisliked: true }),
+    hidden: await Quote.countDocuments({ isHidden: true })
+  });
 });
+
+app.listen(3000, () =>
+  console.log("Server running → http://localhost:3000")
+);
